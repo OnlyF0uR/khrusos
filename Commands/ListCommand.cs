@@ -1,4 +1,5 @@
 ﻿using NBitcoin;
+using Utils = khrusos.Utils;
 
 namespace Khrusos.Commands;
 
@@ -13,7 +14,9 @@ internal class ListCommand
 
     public void Execute()
     {
-        Console.WriteLine("Saved keys  (" + (_instance.Network == Network.Main ? "Mainnet" : "Testnet") + ")");
+        var pass = Utils.PromptPassword();
+
+        Console.WriteLine("Saved keys (" + (_instance.Network == Network.Main ? "Mainnet" : "Testnet") + ")");
         var path = _instance.Network == Network.Main ? "keys.txt" : "keys-testnet.txt";
         foreach (var line in File.ReadLines("keys.txt"))
         {
@@ -21,8 +24,8 @@ internal class ListCommand
 
             var network = Network.GetNetwork(data[1]);
             if (network == null) return;
-            var walletAddress = Key.Parse(data[0], network).GetAddress(ScriptPubKeyType.Legacy, network);
-
+            
+            var walletAddress = Key.Parse(data[0], pass, _instance.Network).GetAddress(ScriptPubKeyType.Legacy, network);
             Console.WriteLine("  (" + data[2] + ") " + walletAddress);
 
             var balance = _instance.BlockchainAPI.GetBalance(walletAddress.ToString()).Result;

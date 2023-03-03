@@ -1,4 +1,5 @@
 ﻿using NBitcoin;
+using Utils = khrusos.Utils;
 
 namespace Khrusos.Commands;
 
@@ -35,26 +36,27 @@ internal class NewCommand
     {
         var privateKey = new Key();
         var secretKey = privateKey.GetWif(_instance.Network);
+        
+        var pass = Utils.PromptPassword();
+        var encryptedKey = secretKey.Encrypt(pass);
 
-        Console.WriteLine("\nPrivate key: " + privateKey.ToHex());
+        Console.WriteLine("Private key: " + privateKey.ToHex());
         Console.WriteLine("Private key WIF: " + secretKey);
+        Console.WriteLine("Private key WIF (encrypted): " + encryptedKey);
 
         Console.WriteLine("\nPublic key: " + privateKey.PubKey.ToHex());
-        Console.WriteLine(
-            "Public key hash: " + privateKey.PubKey.GetAddress(ScriptPubKeyType.Legacy, _instance.Network));
-
-        // TODO: Encrypt the keys :/
+        Console.WriteLine("Public key hash: " + privateKey.PubKey.GetAddress(ScriptPubKeyType.Legacy, _instance.Network));
 
         var path = _instance.Network == Network.Main ? "keys.txt" : "keys-testnet.txt";
         if (!File.Exists(path))
         {
             using var sw = File.CreateText(path);
-            sw.WriteLine(secretKey + ":" + _instance.Network.Name + ":" + _displayName);
+            sw.WriteLine(encryptedKey + ":" + _instance.Network.Name + ":" + _displayName);
         }
         else
         {
             using var sw = new StreamWriter(path, true);
-            sw.WriteLine(secretKey + ":" + _instance.Network.Name + ":" + _displayName);
+            sw.WriteLine(encryptedKey + ":" + _instance.Network.Name + ":" + _displayName);
         }
 
         Console.WriteLine("\nKey saved.");
